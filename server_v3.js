@@ -413,7 +413,9 @@ function quickMatch(player) {
   }
   matchQueues.quick = matchQueues.quick.filter((p) => p.id !== player.id);
   const opponent = matchQueues.quick.shift();
+  // opponentPlayer 在下方 opponent 存在时初始化，避免空队列崩溃
   if (opponent) {
+    const opponentPlayer = players.get(opponent.ws) || opponent;
     const room = {
       id: crypto.randomBytes(3).toString('hex').toUpperCase(),
       creatorId: opponent.id,
@@ -433,7 +435,7 @@ function quickMatch(player) {
       createdAt: Date.now(),
     };
     rooms.set(room.id, room);
-    opponent.roomId = room.id;
+    opponentPlayer.roomId = room.id;
     player.roomId = room.id;
     broadcastRoom(room);
   } else {

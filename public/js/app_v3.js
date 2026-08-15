@@ -20,6 +20,8 @@ let aiLevel = 'medium';
 let aiTimer = null;
 let aiThinking = false;
 let redrawQueued = false;
+let lastMoveCount = 0;
+let resultSoundPlayed = false;
 
 function gameById(id) { return GAME_LIST.find((g) => g.id === id); }
 
@@ -99,6 +101,7 @@ function bindUI() {
   document.querySelectorAll('.menu-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
+        if (window.GameAudio) GameAudio.sfx('menu');
       if (action === 'single') chooseDifficultyAndStartSingle();
       else if (action === 'join') showView('join');
       else if (action === 'create') sendMsg({ type: 'create_room' });
@@ -135,6 +138,13 @@ function bindUI() {
 
   $('#btn-cancel-match').addEventListener('click', () => sendMsg({ type: 'cancel_match' }));
   $('#btn-switch').addEventListener('click', () => openSwitchMenu());
+  const soundBtn = $('#btn-sound');
+  if (soundBtn) {
+    soundBtn.addEventListener('click', () => {
+      const on = window.GameAudio ? GameAudio.toggle() : false;
+      soundBtn.classList.toggle('muted', !on);
+    });
+  }
 
   canvas.addEventListener('click', (e) => {
     if (!gameInstance || gameOver) return;
@@ -193,6 +203,7 @@ function chooseDifficultyAndStartSingle() {
     cls: 'btn-accept',
     onClick: () => {
       aiLevel = l.id;
+        if (window.GameAudio) GameAudio.sfx('select');
       cancelAITimer();
       if (ws && ws.readyState === 1) sendMsg({ type: 'create_room', mode: 'single' });
       else toast('正在连接服务器，请稍候');
@@ -262,6 +273,16 @@ function updateMeUI() {
 /* ============ 房间 ============ */
 function onRoomUpdate(r) {
   room = r;
+  const wasMatching = window.currentView === 'match';
+  const moves = r.moves || [];
+  if (window.GameAudio) {
+    if (moves.length > lastMoveCount) GameAudio.sfx('move');
+    else if (moves.length < lastMoveCount) GameAudio.sfx('select');
+  }
+  lastMoveCount = moves.length;
+  if (wasMatching && r.players && r.players.length === 2 && r.mode !== 'single' && r.status === 'playing' && !r.gameType) {
+    if (window.GameAudio) GameAudio.sfx('match');
+  }
   const hasGame = r.status === 'playing' && r.gameType;
   const selecting = (r.status === 'waiting') || (r.status === 'playing' && !r.gameType);
 
@@ -472,6 +493,14 @@ function updateToolbar() {
   if (!room) return;
   const two = room.players.length === 2;
 
+  addTool(bar, '音乐', () => {
+    if (!window.GameAudio) return;
+    const on = GameAudio.toggle();
+    const sb = $('#btn-sound');
+    if (sb) sb.classList.toggle('muted', !on);
+    toast(on ? '音乐音效已开启' : '音乐音效已关闭');
+  });
+
   addTool(bar, '悔棋', () => {
     if (room.moves.length === 0) return toast('尚无落子');
     if (two) {
@@ -532,6 +561,14 @@ function updateResult() {
   const banner = $('#result-banner');
   if (room.status === 'finished' || localGameOver()) {
     gameOver = true;
+      if (!resultSoundPlayed && window.GameAudio) {
+        resultSoundPlayed = true;
+        const mySide = room.mode === 'single' ? 'black' : mySideMapping();
+        const winnerSide = localWinner || (room.winner ? room.players.find((p) => p.id === room.winner)?.side : null);
+        if (winnerSide) GameAudio.sfx(winnerSide === mySide ? 'win' : 'lose');
+        else if (room.result === '和棋') GameAudio.sfx('notify');
+        else if (room.result === '认输' && room.mode === 'single') GameAudio.sfx('lose');
+      }
     let title = '对局结束', desc = room.result || '';
     if (room.result === '和棋') { title = '和棋'; desc = '一局和棋，握手言和'; }
     else if (room.result === '认输') {
@@ -563,7 +600,8 @@ function updateResult() {
   } else {
     gameOver = false;
     localWinner = null;
-    banner.classList.add('hidden');
+    resultSoundPlayed = false;
+      banner.classList.add('hidden');
   }
 }
 
@@ -583,6 +621,7 @@ function handlePending(r) {
 
   if (needsMyResponse && !pendingModalShown) {
     pendingModalShown = true;
+    if (window.GameAudio) GameAudio.sfx('notify');
     const gameName = p.gameType ? (gameById(p.gameType)?.name || '棋局') : '棋局';
     const fromName = r.players.find((pl) => pl.id === p.from)?.name || '对手';
     let title, body;

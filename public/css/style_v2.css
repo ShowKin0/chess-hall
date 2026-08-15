@@ -735,3 +735,30 @@ body {
   text-overflow: ellipsis;
   max-width: 38vw;
 }
+
+
+/* 音乐开关 */
+.hall-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sound-btn {
+  font-family: var(--font-serif);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(43,37,32,0.35);
+  background: rgba(255,255,255,0.35);
+  color: var(--ink);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+/* 强制单视图显示，避免大厅与棋局同时出现在屏幕上 */
+.view { display: none !important; }
+.view.active { display: flex !important; }
+
+.sound-btn:hover { background: rgba(255,255,255,0.55); }
+.sound-btn.muted { opacity: 0.5; text-decoration: line-through; }

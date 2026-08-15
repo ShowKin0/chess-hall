@@ -3,9 +3,15 @@ const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
 function showView(name) {
-  $$('.view').forEach((v) => v.classList.remove('active'));
+  $$('.view').forEach((v) => {
+    v.classList.remove('active');
+    v.style.display = 'none';
+  });
   const el = $('#view-' + name);
-  if (el) el.classList.add('active');
+  if (el) {
+    el.classList.add('active');
+    el.style.display = 'flex';
+  }
   window.currentView = name;
   onViewShown(name);
 }

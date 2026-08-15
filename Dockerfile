@@ -2,9 +2,6 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package.json ./
-RUN echo "zero-dependency build (no npm install needed)"
-
 COPY server_v3.js ./
 COPY public ./public
 

@@ -762,3 +762,27 @@ body {
 
 .sound-btn:hover { background: rgba(255,255,255,0.55); }
 .sound-btn.muted { opacity: 0.5; text-decoration: line-through; }
+
+
+/* 手机局内：进一步压缩非棋盘区域，给棋盘留出最大空间 */
+@media (max-width: 640px) {
+  #view-game { overflow: hidden; }
+  .game-header { padding: 2px 0 1px; gap: 4px; }
+  .game-header .back-btn { padding: 4px 8px; font-size: 12px; }
+  .game-title span { font-size: 15px; letter-spacing: 2px; }
+  .game-header .icon-btn { width: 32px; height: 28px; font-size: 13px; }
+
+  .game-tabs { margin: 1px 0 3px; gap: 4px; }
+  .game-tab { padding: 4px 8px; font-size: 12px; letter-spacing: 0; border-radius: 999px; }
+
+  .game-status-bar { padding: 0 0 3px; gap: 4px; font-size: 11px; }
+  .status-side { gap: 2px; }
+  .dot { width: 11px; height: 11px; }
+  .captures { font-size: 10px; }
+  .turn-indicator { padding: 2px 8px; font-size: 11px; }
+
+  .board-wrap { padding: 0; margin: 0; }
+  .game-toolbar { margin-top: 5px; gap: 4px; }
+  .tool-btn { padding: 5px 9px; font-size: 12px; letter-spacing: 0; }
+  #black-name, #white-name { max-width: 32vw; }
+}

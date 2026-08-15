@@ -72,7 +72,7 @@ class XiangqiGame extends BaseGame {
 
     ctx.save();
     ctx.fillStyle = '#6b4c23';
-    ctx.font = `${Math.round(this.cell * 0.55)}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.font = `${Math.round(this.cell * 0.55)}px "KaiTi", "STKaiti", "楷体", "Noto Serif SC", "Microsoft YaHei", serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const cy = padY + this.cell * 4.5;
@@ -107,8 +107,8 @@ class XiangqiGame extends BaseGame {
     ctx.strokeStyle = isRed ? '#a33' : '#222';
     ctx.lineWidth = Math.max(1.4, r * 0.12);
     ctx.beginPath(); ctx.arc(x, y, r * 0.92, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = ctx.strokeStyle;
-    ctx.font = `${Math.round(r * 1.15)}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.fillStyle = isRed ? '#a32e24' : '#1c1c1c';
+    ctx.font = `${Math.round(r * 1.18)}px "KaiTi", "STKaiti", "楷体", "Noto Serif SC", "Microsoft YaHei", serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(name, x, y + 1);
     ctx.restore();

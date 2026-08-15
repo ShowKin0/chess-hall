@@ -117,8 +117,11 @@ function bindUI() {
       const target = btn.dataset.back;
       if (target === 'hall') showView('hall');
       else if (target === 'leave-room') {
-        if (room && room.status === 'playing') {
-          confirmModal('离席', '对局尚未结束，确定离开吗？', () => sendMsg({ type: 'leave_room' }));
+          leaveCurrentRoom();
+          return;
+        // legacy confirm
+          if (room && room.status === 'playing') {
+            confirmModal('离席', '对局尚未结束，确定离开吗？', () => sendMsg({ type: 'leave_room' }));
         } else {
           sendMsg({ type: 'leave_room' });
         }
@@ -158,6 +161,17 @@ function bindUI() {
     if (currentGame === 'xiangqi') handleXiangqiClick(e);
     else gameInstance.handleClick(e.clientX, e.clientY);
   });
+}
+
+function leaveCurrentRoom() {
+  cancelAITimer();
+  if (room) sendMsg({ type: 'leave_room' });
+  room = null;
+  selectedPiece = null;
+  gameOver = false;
+  localWinner = null;
+  resultSoundPlayed = false;
+  showView('hall');
 }
 
 function mySideMapping() {
@@ -444,10 +458,11 @@ function updateStatusBar() {
   const xiangqi = currentGame === 'xiangqi';
   const blackLabel = xiangqi ? '红方' : '黑方';
   const whiteLabel = xiangqi ? '黑方' : '白方';
+  const mobile = window.innerWidth <= 640;
 
   if (room.mode === 'single') {
-    $('#black-name').textContent = '玩家 · ' + blackLabel;
-    $('#white-name').textContent = `AI（${whiteLabel}） · ${aiLevelLabel()}`;
+    $('#black-name').textContent = mobile ? '玩家' : ('玩家 · ' + blackLabel);
+    $('#white-name').textContent = mobile ? ('AI · ' + aiLevelLabel()) : (`AI（${whiteLabel}） · ${aiLevelLabel()}`);
   } else {
     $('#black-name').textContent = black ? black.name : blackLabel;
     $('#white-name').textContent = white ? white.name : whiteLabel;
@@ -467,8 +482,8 @@ function updateStatusBar() {
   if (currentGame === 'go') {
     const bc = info.captures?.black || 0;
     const wc = info.captures?.white || 0;
-    $('#black-info').textContent = '提子 ' + bc + ' · 领地 ' + (info.black || 0);
-    $('#white-info').textContent = '领地 ' + (info.white || 0) + ' · 提子 ' + wc;
+    $('#black-info').textContent = mobile ? ('提' + bc) : ('提子 ' + bc + ' · 领地 ' + (info.black || 0));
+    $('#white-info').textContent = mobile ? ('提' + wc) : ('领地 ' + (info.white || 0) + ' · 提子 ' + wc);
   } else {
     $('#black-info').textContent = '';
     $('#white-info').textContent = '';

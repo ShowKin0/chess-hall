@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY server_v3.js ./
 COPY public ./public
+COPY tools ./tools
+RUN node tools/generate_audio.js
 
 EXPOSE 1010
 

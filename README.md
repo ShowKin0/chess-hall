@@ -33,5 +33,5 @@ docker run -d --name ink-chess-hall -p 1010:1010 --restart unless-stopped ink-ch
 
 ## 技术栈
 
-- Node.js + ws（WebSocket）
+- Node.js（内置轻量 WebSocket 实现，零第三方依赖，构建无需 npm install）
 - 原生前端 Canvas 手绘水墨棋盘，无第三方前端依赖

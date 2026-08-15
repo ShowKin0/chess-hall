@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { WebSocketServer } = require('ws');
+const { EventEmitter } = require('events');
 
 const PORT = process.env.PORT || 1010;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -24,6 +24,177 @@ const MIME = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
 };
+
+/* ---------------- 轻量 WebSocket 服务端（RFC6455 基础实现，零依赖） ---------------- */
+class MiniWebSocket extends EventEmitter {
+  constructor(socket) {
+    super();
+    this.socket = socket;
+    this.readyState = 1; // OPEN
+    this._buffer = Buffer.alloc(0);
+    this._fragments = [];
+    this._fragOpcode = null;
+    this._closed = false;
+
+    socket.setNoDelay(true);
+    socket.on('data', (chunk) => this._onData(chunk));
+    socket.on('error', () => this._destroy());
+    socket.on('close', () => this._destroy());
+  }
+
+  _destroy() {
+    if (this._closed) return;
+    this._closed = true;
+    this.readyState = 3; // CLOSED
+    try { this.socket.destroy(); } catch (e) {}
+    this.emit('close');
+  }
+
+  _onData(chunk) {
+    this._buffer = this._buffer.length ? Buffer.concat([this._buffer, chunk]) : chunk;
+    while (this._buffer.length >= 2) {
+      if (!this._parseFrame()) break;
+    }
+  }
+
+  _parseFrame() {
+    const buf = this._buffer;
+    const b0 = buf[0];
+    const b1 = buf[1];
+    const fin = (b0 & 0x80) !== 0;
+    const opcode = b0 & 0x0f;
+    const masked = (b1 & 0x80) !== 0;
+    let len = b1 & 0x7f;
+    let offset = 2;
+
+    if (len === 126) {
+      if (buf.length < 4) return false;
+      len = buf.readUInt16BE(2);
+      offset = 4;
+    } else if (len === 127) {
+      if (buf.length < 10) return false;
+      const big = buf.readBigUInt64BE(2);
+      if (big > BigInt(Number.MAX_SAFE_INTEGER)) return false;
+      len = Number(big);
+      offset = 10;
+    }
+
+    if (masked) {
+      if (buf.length < offset + 4) return false;
+      this._maskKey = buf.subarray(offset, offset + 4);
+      offset += 4;
+    }
+
+    if (buf.length < offset + len) return false;
+
+    let payload = Buffer.from(buf.subarray(offset, offset + len));
+    if (masked) {
+      for (let i = 0; i < payload.length; i++) {
+        payload[i] ^= this._maskKey[i % 4];
+      }
+    }
+    this._buffer = buf.subarray(offset + len);
+
+    if (opcode === 0x8) { // close
+      this._sendFrame(0x8, payload.subarray(0, 2));
+      this.readyState = 2;
+      this.socket.end();
+      this._destroy();
+      return true;
+    }
+    if (opcode === 0x9) { // ping
+      this._sendFrame(0xA, payload);
+      return true;
+    }
+    if (opcode === 0xA) return true; // pong
+
+    if (!fin) {
+      if (opcode !== 0) this._fragOpcode = opcode;
+      this._fragments.push(payload);
+      return true;
+    }
+    if (opcode === 0) {
+      this._fragments.push(payload);
+      payload = Buffer.concat(this._fragments);
+      this._fragments = [];
+      this._fragOpcode = null;
+    } else if (this._fragments.length) {
+      this._fragments.push(payload);
+      payload = Buffer.concat(this._fragments);
+      this._fragments = [];
+      this._fragOpcode = null;
+    }
+
+    this.emit('message', payload.toString('utf8'));
+    return true;
+  }
+
+  _sendFrame(opcode, payload) {
+    if (this._closed || this.readyState !== 1) return;
+    const data = Buffer.isBuffer(payload) ? payload : Buffer.from(String(payload));
+    const len = data.length;
+    let header;
+    if (len < 126) {
+      header = Buffer.alloc(2);
+      header[1] = len;
+    } else if (len < 65536) {
+      header = Buffer.alloc(4);
+      header[1] = 126;
+      header.writeUInt16BE(len, 2);
+    } else {
+      header = Buffer.alloc(10);
+      header[1] = 127;
+      header.writeBigUInt64BE(BigInt(len), 2);
+    }
+    header[0] = 0x80 | opcode;
+    try {
+      this.socket.write(Buffer.concat([header, data]));
+    } catch (e) {
+      this._destroy();
+    }
+  }
+
+  send(data) {
+    this._sendFrame(0x1, data);
+  }
+
+  ping() {
+    if (this.readyState === 1) this._sendFrame(0x9, Buffer.alloc(0));
+  }
+}
+
+class MiniWebSocketServer extends EventEmitter {
+  constructor({ server }) {
+    super();
+    server.on('upgrade', (req, socket, head) => {
+      if (!req.headers.upgrade || String(req.headers.upgrade).toLowerCase() !== 'websocket') {
+        socket.destroy();
+        return;
+      }
+      const key = req.headers['sec-websocket-key'];
+      if (!key) {
+        socket.destroy();
+        return;
+      }
+      const accept = crypto
+        .createHash('sha1')
+        .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
+        .digest('base64');
+
+      socket.write(
+        'HTTP/1.1 101 Switching Protocols\r\n' +
+        'Upgrade: websocket\r\n' +
+        'Connection: Upgrade\r\n' +
+        'Sec-WebSocket-Accept: ' + accept + '\r\n\r\n'
+      );
+
+      const ws = new MiniWebSocket(socket);
+      if (head && head.length) ws._onData(head);
+      this.emit('connection', ws, req);
+    });
+  }
+}
+
 
 const server = http.createServer((req, res) => {
   let urlPath;
@@ -61,7 +232,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-const wss = new WebSocketServer({ server });
+const wss = new MiniWebSocketServer({ server });
 
 /* ---------------- 数据结构 ---------------- */
 const GAME_TYPES = ['go', 'xiangqi', 'gomoku_folk', 'gomoku_standard'];

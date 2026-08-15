@@ -1,7 +1,7 @@
 {
   "name": "ink-chess-hall",
   "version": "1.0.0",
-  "description": "水墨风棋类游戏合集（围棋/象棋/五子棋），实时对战",
+  "description": "水墨风棋类游戏合集（围棋/象棋/五子棋），零第三方依赖，实时对战",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,7 +9,7 @@
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {
-    "ws": "^8.16.0"
+  "dependencies": {},
+    "//": "ws 依赖已移除：服务端内置轻量 WebSocket，无需 npm install"
   }
 }

@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package.json ./
-RUN npm install --registry=https://registry.npmjs.org --omit=dev
+RUN echo "zero-dependency build (no npm install needed)"
 
 COPY server.js ./
 COPY public ./public

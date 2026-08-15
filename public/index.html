@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>水墨棋院 · 棋类游戏合集</title>
+<link rel="stylesheet" href="css/style_v2.css">
+</head>
+<body>
+<div class="ink-bg" aria-hidden="true"></div>
+<audio id="sound" preload="none"></audio>
+
+<div id="app">
+
+  <!-- ============ 大厅 ============ -->
+  <section id="view-hall" class="view active">
+    <header class="hall-header">
+      <div class="brand">
+        <h1>水墨棋院</h1>
+        <p class="subtitle">一局棋 · 一方天地</p>
+      </div>
+      <div class="player-chip" id="me-chip">
+        <span class="avatar">棋</span>
+        <span id="me-name">棋友</span>
+      </div>
+    </header>
+
+    <div class="hall-menu">
+      <button class="menu-btn" data-action="single">
+        <span class="icon">孤</span>
+        <div class="menu-text">
+          <strong>单机模式</strong>
+          <small>独坐幽篁，对弈自娱</small>
+        </div>
+      </button>
+
+      <button class="menu-btn" data-action="join">
+        <span class="icon">访</span>
+        <div class="menu-text">
+          <strong>加入房间</strong>
+          <small>寻一知己，共赴棋局</small>
+        </div>
+      </button>
+
+      <button class="menu-btn" data-action="create">
+        <span class="icon">设</span>
+        <div class="menu-text">
+          <strong>创建房间</strong>
+          <small>备好棋枰，虚位以待</small>
+        </div>
+      </button>
+
+      <button class="menu-btn" data-action="quick">
+        <span class="icon">缘</span>
+        <div class="menu-text">
+          <strong>快速匹配</strong>
+          <small>随缘而遇，棋逢对手</small>
+        </div>
+      </button>
+    </div>
+
+    <footer class="hall-footer">— 运筹黑白 · 纵横方寸 —</footer>
+  </section>
+
+  <!-- ============ 加入房间 ============ -->
+  <section id="view-join" class="view">
+    <header class="sub-header">
+      <button class="back-btn" data-back="hall">‹ 返回</button>
+      <h2>加入房间</h2>
+    </header>
+    <div class="panel join-panel">
+      <label for="room-id">请输入房间号</label>
+      <input id="room-id" maxlength="6" placeholder="如 A1B2C3" autocomplete="off">
+      <button class="btn-primary" id="btn-join-room">入席</button>
+      <p class="hint" id="join-hint"></p>
+    </div>
+  </section>
+
+  <!-- ============ 房间等待 ============ -->
+  <section id="view-room" class="view">
+    <header class="sub-header">
+      <button class="back-btn" data-back="leave-room">‹ 离开</button>
+      <h2>对弈雅室</h2>
+      <span class="room-tag" id="room-id-tag"></span>
+    </header>
+
+    <div class="seat-board">
+      <div class="seat" id="seat-black">
+        <div class="stone black"></div>
+        <div class="seat-name">黑方</div>
+        <div class="seat-status" id="status-black">虚位以待</div>
+      </div>
+      <div class="seat-vs">VS</div>
+      <div class="seat" id="seat-white">
+        <div class="stone white"></div>
+        <div class="seat-name">白方</div>
+        <div class="seat-status" id="status-white">虚位以待</div>
+      </div>
+    </div>
+
+    <div id="select-stage" class="hidden">
+      <div class="panel select-panel">
+        <h3>请选择棋局</h3>
+        <div class="game-select-grid" id="game-select-grid"></div>
+      </div>
+    </div>
+
+    <div id="room-tip" class="hint center"></div>
+  </section>
+
+  <!-- ============ 匹配中 ============ -->
+  <section id="view-match" class="view">
+    <div class="panel match-panel">
+      <h2>正在寻找对手</h2>
+      <div class="taiji"></div>
+      <p class="hint" id="match-hint">山中无甲子，对弈不知年…</p>
+      <button class="btn-ghost" id="btn-cancel-match">取消匹配</button>
+    </div>
+  </section>
+
+  <!-- ============ 对局 ============ -->
+  <section id="view-game" class="view">
+    <header class="game-header">
+      <button class="back-btn" data-back="leave-room">‹ 离开</button>
+      <div class="game-title">
+        <span id="game-name">围棋</span>
+      </div>
+      <button class="icon-btn" id="btn-switch" title="切换棋局">棋</button>
+    </header>
+
+    <nav class="game-tabs" id="game-tabs"></nav>
+
+    <div class="game-status-bar">
+      <div class="status-side" id="status-black-bar">
+        <span class="dot black"></span>
+        <span id="black-name">黑方</span>
+        <span class="captures" id="black-info"></span>
+      </div>
+      <div class="turn-indicator" id="turn-indicator">黑方行棋</div>
+      <div class="status-side right" id="status-white-bar">
+        <span class="captures" id="white-info"></span>
+        <span id="white-name">白方</span>
+        <span class="dot white"></span>
+      </div>
+    </div>
+
+    <div class="board-wrap" id="board-wrap">
+      <canvas id="board" width="600" height="600"></canvas>
+    </div>
+
+    <div class="game-toolbar" id="game-toolbar"></div>
+
+    <div id="result-banner" class="result-banner hidden"></div>
+  </section>
+
+  <!-- ============ 弹窗 ============ -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="modal-title">提示</h3>
+      <p id="modal-body"></p>
+      <div class="modal-actions" id="modal-actions"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+</div>
+
+<script src="js/ui.js"></script>
+<script src="js/ws.js"></script>
+<script src="js/games/base.js"></script>
+<script src="js/games/go.js"></script>
+<script src="js/games/xiangqi_v3.js"></script>
+<script src="js/games/gomoku_folk.js"></script>
+<script src="js/games/gomoku_standard.js"></script>
+<script src="js/ai_v2.js"></script>
+<script src="js/app_v3.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+services:
+  ink-chess:
+    build: .
+    image: ink-chess:latest
+    container_name: ink-chess-hall
+    ports:
+      - "1010:1010"
+    restart: unless-stopped
+    environment:
+      - PORT=1010
+      - HOST=0.0.0.0

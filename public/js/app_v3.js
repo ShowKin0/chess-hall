@@ -691,6 +691,7 @@ function handleXiangqiClick(e) {
   const state = gameInstance.state || gameInstance.buildState(room);
   const board = state.board;
   const mySide = room.players.length === 1 ? 'black' : currentTurnSide();
+  if (!mySide) { toast('尚未取得执子身份'); return; }
   const clicked = board[pt.row]?.[pt.col];
 
   if (selectedPiece) {

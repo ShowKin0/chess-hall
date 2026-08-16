@@ -72,12 +72,12 @@ class XiangqiGame extends BaseGame {
 
     ctx.save();
     ctx.fillStyle = '#6b4c23';
-    ctx.font = `${Math.round(this.cell * 0.55)}px "KaiTi", "STKaiti", "楷体", "Noto Serif SC", "Microsoft YaHei", serif`;
+    // (字体占位已移除，楚河汉界以中线表示)
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const cy = padY + this.cell * 4.5;
-    ctx.fillText('楚 河', padX + this.cell * 2, cy);
-    ctx.fillText('汉 界', padX + this.cell * 6.4, cy);
+    ctx.strokeStyle = '#6b4c23'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padX, cy); ctx.lineTo(padX + w, cy); ctx.stroke();
+    // 楚河汉界以中线表示，避免字体缺失
     ctx.restore();
 
     this.padX = padX; this.padY = padY;
@@ -107,8 +107,8 @@ class XiangqiGame extends BaseGame {
     ctx.strokeStyle = isRed ? '#a33' : '#222';
     ctx.lineWidth = Math.max(1.4, r * 0.12);
     ctx.beginPath(); ctx.arc(x, y, r * 0.92, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = isRed ? '#a32e24' : '#1c1c1c';
-    ctx.font = `${Math.round(r * 1.18)}px "KaiTi", "STKaiti", "楷体", "Noto Serif SC", "Microsoft YaHei", serif`;
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.font = `bold ${Math.round(r * 1.05)}px serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(name, x, y + 1);
     ctx.restore();
@@ -119,8 +119,8 @@ class XiangqiGame extends BaseGame {
     const col = Math.round((x - padX) / cell);
     const row = Math.round((y - padY) / cell);
     if (row < 0 || col < 0 || row >= this.rows || col >= this.cols) return null;
-    if (Math.abs(x - padX - col * cell) > cell * 0.45) return null;
-    if (Math.abs(y - padY - row * cell) > cell * 0.45) return null;
+    if (Math.abs(x - padX - col * cell) > cell * 0.52) return null;
+    if (Math.abs(y - padY - row * cell) > cell * 0.52) return null;
     return { row, col };
   }
 
